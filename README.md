@@ -34,19 +34,23 @@ CSV files (Data)
 
 3. Dataset
    
-Raw energy meter data resides under data/meters/raw. These are likely time-series files containing timestamps and energy measurements for various buildings or meters.
+Raw energy meter data resides under data/meters/raw. These are time-series files containing timestamps and energy measurements for various buildings or meters.
 
 Typical files contain:
 
-Timestamp (date/time of measurement)
-Energy consumption reading (e.g., kWh)
-Meter identifiers (if multiple meters)
+• Timestamp (date/time of measurement)
+
+• Energy consumption reading (e.g., kWh)
+
+• Meter identifiers (if multiple meters)
 
 Data is typically used for:
 
-Exploratory data analysis
-Training anomaly detection models
-Evaluating detection performance against expected patterns
+• Exploratory data analysis
+
+• Training anomaly detection models
+
+• Evaluating detection performance against expected patterns
 
 5. Requirements
    
@@ -83,7 +87,9 @@ pip install -r requirements.txt
 6. Usage
    
 Running Notebooks
-Most analysis is done via Jupyter notebooks. To start the notebook server:
+Most analysis is done via Jupyter notebooks. 
+
+To start the notebook server:
 
 ``` code
 jupyter notebook
@@ -96,17 +102,23 @@ Open and run the notebooks in VSCode/ Jupyter or Colab to preprocess data, visua
 Each notebook serves a specific purpose. The recommended sequence is : 
 
 • Explotory Data Analysis (01_eda.ipynb)
+
 • Data Preprocessing (02_preprocessing.ipynb)
+
 • Feature Engineering (03_feature_engineering.ipynb)
+
 • Model Building (04_model_building.ipynb)
 
 9. Example Workflow
     
-Load and inspect raw data.
+• Load and inspect raw data.
 
 • Preprocess data (e.g., filling missing values, normalization).
+
 • Visualize metrics to understand trends and seasonal effects.
+
 • Train anomaly detection models (e.g., threshold methods, clustering, ML).
+
 • Evaluate detected anomalies and possibly visualize results.
 
 11. Plotting and Outputs
@@ -116,5 +128,7 @@ Visualization plots generated from analysis are stored in the plots/ directory.
 Typical plots include:
 
 • Time series of energy consumption
+
 • Detected anomaly markers
+
 • Model performance charts
