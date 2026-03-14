@@ -1,5 +1,9 @@
 # building-energy-anomaly-detection
 
+[![Python](https://img.shields.io/badge/Python-3.8%2B-blue)](https://www.python.org/)
+[![scikit-learn](https://img.shields.io/badge/scikit--learn-1.3%2B-yellow)](https://scikit-learn.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
+
 A repository for analyzing and detecting anomalies in building energy consumption data. The project contains data, analysis notebooks, visualizations, and tools for performing exploratory data analysis and building anomaly detection models.
 
 # Table of Contents
