@@ -1,138 +1,126 @@
-# building-energy-anomaly-detection
+# Building Energy Anomaly Detection
 
-[![Python](https://img.shields.io/badge/Python-3.8%2B-blue)](https://www.python.org/)
-[![scikit-learn](https://img.shields.io/badge/scikit--learn-1.3%2B-yellow)](https://scikit-learn.org/)
+[![Python](https://img.shields.io/badge/Python-3.8+-blue)](https://www.python.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-orange)](https://fastapi.tiangolo.com/)
+[![scikit-learn](https://img.shields.io/badge/scikit--learn-1.3+-yellow)](https://scikit-learn.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 
-A repository for analyzing and detecting anomalies in building energy consumption data. The project contains data, analysis notebooks, visualizations, and tools for performing exploratory data analysis and building anomaly detection models.
+Detect anomalies in building energy consumption using ML models (Isolation Forest, LOF, Elliptic Envelope ensemble). Includes Jupyter notebooks for analysis and **FastAPI** for production API deployment.
 
-# Table of Contents
+## Table of Contents
 
-• About the Project
+- [About](#about)
+- [Repository Structure](#structure)
+- [Dataset](#dataset)
+- [Requirements](#requirements)
+- [Installation](#installation)
+- [Usage](#usage)
+  - [Jupyter Notebooks](#notebooks)
+  - [FastAPI](#api)
+- [Workflow](#workflow)
+- [Outputs](#outputs)
+- [API Endpoints](#endpoints)
 
-• Repository Structure
+## About
 
-• Dataset
+Analyzes time-series energy data (electricity, water, gas, etc.) for anomalies using ensemble ML: **Isolation Forest**, **Local Outlier Factor**, **Elliptic Envelope**. Produces visualizations, results CSV, and **REST API**.
 
-• Requirements
+## Repository Structure
 
-• Installation
+```
+building-energy-anomaly-detection/
+├── data/meters/raw/          # Raw CSV (electricity.csv, etc.)
+├── data/meters/whole/        # Processed EDA CSV
+├── notebooks/                # Analysis pipeline (01_eda.ipynb → 04_model_training.ipynb)
+├── API/                      # FastAPI production API (main.py)
+├── Plots/                    # Generated visualizations
+├── results/                  # Anomaly detection outputs (CSV)
+├── requirements.txt
+└── README.md
+```
 
-• Usage
+## Dataset
 
-• Notebooks Overview
+**Raw**: `data/meters/raw/*.csv` (electricity, chilledwater, gas, etc.) - timestamp + consumption.
 
-• Example Workflow
+**Processed**: `data/meters/whole/eda.csv` - EDA-ready for modeling.
 
-• Plotting and Outputs
+## Requirements
 
-1. About the Project
-   
-This project aims to analyze building energy meter data and detect abnormal consumption patterns (anomalies). Detecting energy anomalies can be crucial for identifying inefficiencies, equipment failures, or unusual usage patterns, which can help building managers decrease energy waste.
+See `requirements.txt`:
 
-2. Repository Structure
-   
-Raw energy meter time-series data
-Jupyter notebooks for analysis and modeling Visualization plots and
-CSV files (Data)
-
-3. Dataset
-   
-Raw energy meter data resides under data/meters/raw. These are time-series files containing timestamps and energy measurements for various buildings or meters.
-
-Typical files contain:
-
-• Timestamp (date/time of measurement)
-
-• Energy consumption reading (e.g., kWh)
-
-• Meter identifiers (if multiple meters)
-
-Data is typically used for:
-
-• Exploratory data analysis
-
-• Training anomaly detection models
-
-• Evaluating detection performance against expected patterns
-
-5. Requirements
-   
-Python packages required for this project are listed in requirements.txt.
-
-Typical dependencies include: 
-
-```code
-Pandas
-Numpy
-Scikitlearn
-Seaborn
+```
+fastapi
+uvicorn
+pandas
+numpy
+scikit-learn
 joblib
-os
+matplotlib
+seaborn
+jupyter
 ```
-5. Installation
 
-Clone the repository
+## Installation
 
-```code
-git clone https://github.com/Fuhrerx/building-energy-anomaly-detection.git
+```bash
+git clone <repo>
 cd building-energy-anomaly-detection
-```
-
-Install dependencies, It is recommended to use a virtual environment:
-
-```code
 python -m venv env
-source env/bin/activate         # Linux / macOS
-.\env\Scripts\activate          # Windows
+# Activate env...
 pip install -r requirements.txt
 ```
 
-6. Usage
-   
-Running Notebooks
-Most analysis is done via Jupyter notebooks. 
+## Usage
 
-To start the notebook server:
+### Jupyter Notebooks
 
-``` code
+```bash
 jupyter notebook
 ```
 
-Open and run the notebooks in VSCode/ Jupyter or Colab to preprocess data, visualize metrics, and train or evaluate models.
+Run sequentially:
 
-7. Notebooks Overview
-   
-Each notebook serves a specific purpose. The recommended sequence is : 
+1. `01_eda.ipynb` - Explore distributions, correlations.
+2. `02_preprocessing.ipynb` - Clean data.
+3. `03_feature_engineering.ipynb` - Create features.
+4. `04_model_training.ipynb` - **Train ensemble** → Save `results/anomaly_detection_results.csv` + plots.
 
-• Explotory Data Analysis (01_eda.ipynb)
+### FastAPI
 
-• Data Preprocessing (02_preprocessing.ipynb)
+```bash
+cd API
+uvicorn main:app --reload
+```
 
-• Feature Engineering (03_feature_engineering.ipynb)
+- http://localhost:8000/docs
+- **POST /detect-anomalies** → Instant JSON results (anomalies %, top 10, votes).
 
-• Model Building (04_model_building.ipynb)
+## Outputs
 
-9. Example Workflow
-    
-• Load and inspect raw data.
+- **Plots/**: anomaly_scores_distribution.png, feature_importance.png, anomaly_detection_plot.png.
+- **results/**: anomaly_detection_results.csv (w/ `is_anomaly`, `anomaly_votes`).
+- **API**: JSON summary.
 
-• Preprocess data (e.g., filling missing values, normalization).
+## API Endpoints
 
-• Visualize metrics to understand trends and seasonal effects.
+| Method | Endpoint            | Description                           |
+| ------ | ------------------- | ------------------------------------- |
+| GET    | `/`                 | API info                              |
+| POST   | `/detect-anomalies` | Run ensemble detection → JSON summary |
 
-• Train anomaly detection models (e.g., threshold methods, clustering, ML).
+**Example Response**:
 
-• Evaluate detected anomalies and possibly visualize results.
+```json
+{
+  "total_points": 10000,
+  "anomaly_count": 250,
+  "anomaly_percentage": 2.5,
+  "votes_distribution": { "0": 9500, "1": 200, "2": 150, "3": 150 },
+  "top_anomalies": [
+    /* first 10 anomaly rows */
+  ]
+}
+```
 
-11. Plotting and Outputs
-    
-Visualization plots generated from analysis are stored in the plots/ directory. 
-
-Typical plots include:
-
-• Time series of energy consumption
-
-• Detected anomaly markers
-
-• Model performance charts
+**Features**: Parallel training, majority vote ensemble, Swagger UI (/docs), production-ready.
