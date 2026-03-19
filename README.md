@@ -54,7 +54,7 @@ building-energy-anomaly-detection/
 ├── requirements.txt              # ML deps
 ├── rag_requirements.txt          # RAG deps
 ├── README.md
-└── .env                          # GROQ_API_KEY
+└── .env                          # GROQ_API_KEY==your_key_here
 ```
 
 ## Dataset
@@ -91,7 +91,7 @@ GROQ_API_KEY=your_key_here
 ## Installation
 
 ```bash
-git clone <repo>
+git clone https://github.com/Ak47xdd/building-energy-anomaly-detection
 cd building-energy-anomaly-detection
 
 # ML env
@@ -140,7 +140,15 @@ Interactive chat over PDFs. Type questions like:
 
 - "What are the main energy saving recommendations?"
 - Sources cited automatically.
-
+```
+{
+  "answer": "The audit recommends upgrading HVAC systems in Building A 
+             and installing smart meters across all floors to reduce 
+             consumption by an estimated 18%.",
+  "sources": ["documents/building_audit_2024.pdf"]
+}
+```
+  
 **First run**: Builds `chroma_db/` (~1-2 min).
 
 ### FastAPI RAG API
