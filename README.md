@@ -1,11 +1,17 @@
-# Building Energy Anomaly Detection
+# Building Energy Anomaly Detection & RAG Assistant
 
 [![Python](https://img.shields.io/badge/Python-3.8+-blue)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-orange)](https://fastapi.tiangolo.com/)
 [![scikit-learn](https://img.shields.io/badge/scikit--learn-1.3+-yellow)](https://scikit-learn.org/)
+[![LangChain](https://img.shields.io/badge/LangChain-0.2+-purple)](https://python.langchain.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 
-Detect anomalies in building energy consumption using ML models (Isolation Forest, LOF, Elliptic Envelope ensemble). Includes Jupyter notebooks for analysis and **FastAPI** for production API deployment.
+**Dual-purpose repo**:
+
+1. **ML Anomaly Detection** in building energy consumption (Isolation Forest + LOF + Elliptic Envelope ensemble).
+2. **RAG Assistant** for querying energy audit PDF reports using LangChain + Groq + Chroma.
+
+Includes Jupyter notebooks, **FastAPI APIs** (anomaly detection + RAG chat), and production deployment.
 
 ## Table of Contents
 
@@ -15,50 +21,71 @@ Detect anomalies in building energy consumption using ML models (Isolation Fores
 - [Requirements](#requirements)
 - [Installation](#installation)
 - [Usage](#usage)
-  - [Jupyter Notebooks](#notebooks)
-  - [FastAPI](#api)
+  - [Jupyter Notebooks (Anomaly Detection)](#notebooks)
+  - [FastAPI Anomaly Detection](#api-anomaly)
+  - [RAG Assistant](#rag)
+  - [FastAPI RAG API](#api-rag)
 - [Workflow](#workflow)
 - [Outputs](#outputs)
 - [API Endpoints](#endpoints)
 
 ## About
 
-Analyzes time-series energy data (electricity, water, gas, etc.) for anomalies using ensemble ML: **Isolation Forest**, **Local Outlier Factor**, **Elliptic Envelope**. Produces visualizations, results CSV, and **REST API**.
+**Anomaly Detection**: Analyzes time-series energy data (electricity, water, gas, etc.) for anomalies using ML ensemble. Produces visualizations, CSV results, REST API.
+
+**RAG Assistant**: Loads energy audit PDFs → creates vector store → answers questions via Groq LLM + LangChain retrieval.
 
 ## Repository Structure
 
 ```
 building-energy-anomaly-detection/
-├── data/meters/raw/          # Raw CSV (electricity.csv, etc.)
-├── data/meters/whole/        # Processed EDA CSV
-├── notebooks/                # Analysis pipeline (01_eda.ipynb → 04_model_training.ipynb)
-├── API/                      # FastAPI production API (main.py)
-├── Plots/                    # Generated visualizations
-├── results/                  # Anomaly detection outputs (CSV)
-├── requirements.txt
-└── README.md
+├── data/meters/raw/              # Raw CSV (electricity.csv, etc.)
+├── data/meters/whole/            # Processed EDA CSV
+├── documents/                    # Energy audit PDFs
+├── notebooks/                    # ML analysis (01_eda.ipynb → 04_model_training.ipynb)
+├── API/                          # FastAPI apps
+│   ├── main.py                   # Anomaly detection API
+│   └── app.py                    # RAG API
+├── RAG/                          # RAG pipeline
+│   └── rag.py                    # LangChain RAG implementation
+├── Plots/                        # ML visualizations
+├── results/                      # Anomaly results CSV
+├── chroma_db/                    # Vector store (auto-created)
+├── requirements.txt              # ML deps
+├── rag_requirements.txt          # RAG deps
+├── README.md
+└── .env                          # GROQ_API_KEY
 ```
 
 ## Dataset
 
-**Raw**: `data/meters/raw/*.csv` (electricity, chilledwater, gas, etc.) - timestamp + consumption.
+**Energy Meters**: `data/meters/raw/*.csv` (electricity, chilledwater, gas, hotwater, irrigation, solar, steam, water).
 
-**Processed**: `data/meters/whole/eda.csv` - EDA-ready for modeling.
+**Processed**: `data/meters/whole/eda.csv`.
+
+**Documents**: `documents/*.pdf` - Energy audit reports for RAG.
 
 ## Requirements
 
-See `requirements.txt`:
+**ML Anomaly Detection**: `pip install -r requirements.txt`
+
+**RAG**: `pip install -r rag_requirements.txt`
+
+Key deps:
 
 ```
-fastapi
-uvicorn
-pandas
-numpy
-scikit-learn
-joblib
-matplotlib
-seaborn
-jupyter
+# ML
+fastapi uvicorn pandas scikit-learn matplotlib seaborn
+
+# RAG
+langchain-community langchain-groq chromadb sentence-transformers pypdf
+```
+
+**Groq API Key**: Required for RAG. Get free at https://console.groq.com/keys
+
+```
+# .env
+GROQ_API_KEY=your_key_here
 ```
 
 ## Installation
@@ -66,61 +93,107 @@ jupyter
 ```bash
 git clone <repo>
 cd building-energy-anomaly-detection
-python -m venv env
-# Activate env...
+
+# ML env
+python -m venv api_env
+# Activate...
 pip install -r requirements.txt
+
+# RAG env (recommended)
+python -m venv rag_env
+# Activate...
+pip install -r rag_requirements.txt
 ```
 
 ## Usage
 
-### Jupyter Notebooks
+### Jupyter Notebooks (Anomaly Detection)
 
 ```bash
 jupyter notebook
 ```
 
-Run sequentially:
+1. `01_eda.ipynb` - EDA.
+2. `02_preprocessing.ipynb` - Cleaning.
+3. `03_feature_engineering.ipynb` - Features.
+4. `04_model_training.ipynb` - Train ensemble → `results/anomaly_detection_results.csv` + plots.
 
-1. `01_eda.ipynb` - Explore distributions, correlations.
-2. `02_preprocessing.ipynb` - Clean data.
-3. `03_feature_engineering.ipynb` - Create features.
-4. `04_model_training.ipynb` - **Train ensemble** → Save `results/anomaly_detection_results.csv` + plots.
-
-### FastAPI
+### FastAPI Anomaly Detection
 
 ```bash
 cd API
 uvicorn main:app --reload
 ```
 
+Visit: http://localhost:8000/docs
+
+**POST /detect-anomalies** → JSON anomaly summary.
+
+### RAG Assistant (CLI)
+
+```bash
+cd RAG
+python rag.py
+```
+
+Interactive chat over PDFs. Type questions like:
+
+- "What are the main energy saving recommendations?"
+- Sources cited automatically.
+
+**First run**: Builds `chroma_db/` (~1-2 min).
+
+### FastAPI RAG API
+
+```bash
+cd API
+uvicorn app:app --reload --env-file ../.env
+```
+
 - http://localhost:8000/docs
-- **POST /detect-anomalies** → Instant JSON results (anomalies %, top 10, votes).
+- **POST /query** `{ "question": "..." }` → JSON answer + sources.
+
+## Workflow
+
+1. **ML**: notebooks → train → API/main.py → results/plots.
+2. **RAG**: PDFs → rag.py (builds chroma_db) → API/app.py → chat/query.
+
+**Production**: Both APIs can run concurrently (different ports).
 
 ## Outputs
 
-- **Plots/**: anomaly_scores_distribution.png, feature_importance.png, anomaly_detection_plot.png.
-- **results/**: anomaly_detection_results.csv (w/ `is_anomaly`, `anomaly_votes`).
-- **API**: JSON summary.
+**ML**:
+
+- `Plots/*.png` (anomaly plots, heatmaps).
+- `results/anomaly_detection_results.csv` (`is_anomaly`, `anomaly_votes`).
+
+**RAG**:
+
+- `chroma_db/` (persistent vector store).
+- JSON responses w/ answers + source PDFs.
 
 ## API Endpoints
 
-| Method | Endpoint            | Description                           |
-| ------ | ------------------- | ------------------------------------- |
-| GET    | `/`                 | API info                              |
-| POST   | `/detect-anomalies` | Run ensemble detection → JSON summary |
+### Anomaly Detection (main.py)
 
-**Example Response**:
+| Method | Endpoint            | Description               |
+| ------ | ------------------- | ------------------------- |
+| GET    | `/`                 | Info                      |
+| POST   | `/detect-anomalies` | Ensemble detection → JSON |
 
-```json
-{
-  "total_points": 10000,
-  "anomaly_count": 250,
-  "anomaly_percentage": 2.5,
-  "votes_distribution": { "0": 9500, "1": 200, "2": 150, "3": 150 },
-  "top_anomalies": [
-    /* first 10 anomaly rows */
-  ]
-}
+### RAG Assistant (app.py)
+
+| Method | Endpoint | Description                          |
+| ------ | -------- | ------------------------------------ |
+| GET    | `/`      | "Energy Audit RAG Assistant running" |
+| POST   | `/query` | `{question: str}` → Answer + sources |
+
+**RAG Example**:
+
+```bash
+curl -X POST "http://localhost:8000/query" \
+  -H "Content-Type: application/json" \
+  -d '{"question": "What energy efficiency measures are recommended?"}'
 ```
 
-**Features**: Parallel training, majority vote ensemble, Swagger UI (/docs), production-ready.
+**Features**: ML ensemble voting, PDF RAG w/ local embeddings, dual FastAPI apps, Swagger docs, env isolation, free Groq inference.
