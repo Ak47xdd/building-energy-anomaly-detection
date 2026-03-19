@@ -54,7 +54,7 @@ building-energy-anomaly-detection/
 ├── requirements.txt              # ML deps
 ├── rag_requirements.txt          # RAG deps
 ├── README.md
-└── .env                          # GROQ_API_KEY==your_key_here
+└── .env.example                  # GROQ_API_KEY=your_key_here
 ```
 
 ## Dataset
