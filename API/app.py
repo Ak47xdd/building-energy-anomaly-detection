@@ -1,7 +1,9 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from dotenv import load_dotenv
+import sys
 import os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from RAG.rag import (
     load_documents, split_documents,
     create_vector_store, load_vector_store,
@@ -10,14 +12,16 @@ from RAG.rag import (
 
 load_dotenv()
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+if not GROQ_API_KEY:
+    raise ValueError("GROQ_API_KEY not set")
 
 app = FastAPI(title="Energy Audit RAG Assistant")
 
-GROQ_API_KEY = os.environ.get("GROQ_API_KEY", GROQ_API_KEY)
-
-@app.lifespan("startup")
+@app.on_event("startup")
 async def startup():
     global rag_chain
+    rag_chain = None
+    # Startup
     if not os.path.exists("chroma_db/"):
         docs = load_documents()
         chunks = split_documents(docs)
