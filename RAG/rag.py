@@ -5,6 +5,7 @@ from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores import Chroma
 from langchain_groq import ChatGroq
 from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.runnables import RunnablePassthrough
 
 def load_documents(docs_path="documents/"):
     documents = []
@@ -49,7 +50,6 @@ def load_vector_store(persist_dir="chroma_db/"):
     return vector_store
 
 def build_rag_chain(vector_store, groq_api_key):
-    from langchain_core.runnables import RunnablePassthrough
     llm = ChatGroq(
         api_key=groq_api_key,
         model_name="llama3-8b-8192",  # free Llama 3 model via Groq
@@ -91,8 +91,6 @@ def query(rag_chain, vector_store, question):
     }
 
 if __name__ == "__main__":
-    import os
-    
     # Check/set API key
     groq_api_key = os.getenv("GROQ_API_KEY")
     if not groq_api_key:
@@ -127,4 +125,3 @@ if __name__ == "__main__":
         print(f"A: {result['answer']}")
         if result['sources']:
             print(f"Sources: {result['sources']}")
-
