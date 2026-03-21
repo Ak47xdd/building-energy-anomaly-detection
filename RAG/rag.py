@@ -1,5 +1,5 @@
 import os
-from langchain_community.document_loaders import PyMuPDFLoader
+import fitz
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores import Chroma
@@ -7,15 +7,37 @@ from langchain_groq import ChatGroq
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnablePassthrough
 
+if __name__ == "__main__":
+    # Check/set API key
+    groq_api_key = os.getenv("GROQ_API_KEY")
+    if not groq_api_key:
+        print("ERROR: Set GROQ_API_KEY env var first!")
+        print("Windows: $env:GROQ_API_KEY='your_key' then rerun")
+        print("Or export GROQ_API_KEY=your_key (Linux/Mac)")
+        exit(1)
+
 def load_documents(docs_path="documents/"):
+    docs_path = os.path.abspath(docs_path)
     documents = []
+    pdf_files = []
     for root, dirs, files in os.walk(docs_path):
         for file in files:
             if file.endswith('.pdf'):
                 file_path = os.path.join(root, file)
-                loader = PyMuPDFLoader(file_path)
-                documents.extend(loader.load())
-    print(f"Loaded {len(documents)} pages from PDFs")
+                pdf_files.append(file_path)
+    
+    print(f"Found {len(pdf_files)} PDF files in {docs_path}")
+    for file_path in pdf_files:
+        try:
+            print(f"Loading {file_path}...")
+            loader = fitz(file_path)
+            raw_docs = loader.load()
+            documents.extend(raw_docs)
+            print(f"  Successfully loaded {len(raw_docs)} pages from {os.path.basename(file_path)}")
+        except Exception as e:
+            print(f"  FAILED to load {os.path.basename(file_path)}: {str(e)}")
+    
+    print(f"Total loaded {len(documents)} pages from {len(pdf_files)} PDFs")
     return documents
 
 def split_documents(documents):
@@ -89,15 +111,6 @@ def query(rag_chain, vector_store, question):
         "answer": result.content,
         "sources": sources
     }
-
-if __name__ == "__main__":
-    # Check/set API key
-    groq_api_key = os.getenv("GROQ_API_KEY")
-    if not groq_api_key:
-        print("ERROR: Set GROQ_API_KEY env var first!")
-        print("Windows: $env:GROQ_API_KEY='your_key' then rerun")
-        print("Or export GROQ_API_KEY=your_key (Linux/Mac)")
-        exit(1)
     
     print("1. Loading PDFs from documents/...")
     docs = load_documents()
@@ -108,9 +121,9 @@ if __name__ == "__main__":
     print("3. Loading vector store (builds if missing)...")
     try:
         vector_store = load_vector_store()
-        print("Loaded existing vector store.")
-    except:
-        print("Creating new vector store...")
+        print(f"Loaded existing vector store with {vector_store._collection.count()} vectors.")
+    except Exception as e:
+        print(f"Failed to load vector store ({e}), creating new...")
         vector_store = create_vector_store(chunks)
     
     print("4. Building RAG chain...")
