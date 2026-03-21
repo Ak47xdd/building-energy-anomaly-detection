@@ -1,8 +1,11 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 import pandas as pd
 import numpy as np
+from API.key.auth import verify_api_key, get_password_hash, API_KEYS_DB
+from API.key.keygen import generate_api_key
+import secrets
 from sklearn.ensemble import IsolationForest
 from sklearn.neighbors import LocalOutlierFactor
 from sklearn.covariance import EllipticEnvelope
@@ -11,6 +14,20 @@ from joblib import Parallel, delayed
 import os
 
 app = FastAPI(title="Building Energy Anomaly Detection API", version="1.0.0")
+
+@app.get("/open")
+def open_endpoint():
+    return {"message": "This is an open endpoint."}
+
+@app.get("/protected", dependencies=[Depends(verify_api_key)])
+def protected_endpoint():
+    return {"message": "You used a valid API key!"}
+
+@app.post("/admin/create-key", dependencies=[Depends(verify_api_key)])
+def create_new_api_key():
+    new_key = generate_api_key()
+    
+    return {"message": "New API key generated and stored.", "api_key": new_key}
 
 class AnomalySummary(BaseModel):
     total_points: int
