@@ -3,7 +3,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 import pandas as pd
 import numpy as np
-from API.key.auth import verify_api_key, get_password_hash, API_KEYS_DB
+from .key.auth import verify_api_key, get_password_hash, API_KEYS_DB
 from API.key.keygen import generate_api_key
 import secrets
 from sklearn.ensemble import IsolationForest

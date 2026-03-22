@@ -1,5 +1,6 @@
 import os
 import fitz
+from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores import Chroma
@@ -30,14 +31,26 @@ def load_documents(docs_path="documents/"):
     for file_path in pdf_files:
         try:
             print(f"Loading {file_path}...")
-            loader = fitz(file_path)
-            raw_docs = loader.load()
-            documents.extend(raw_docs)
-            print(f"  Successfully loaded {len(raw_docs)} pages from {os.path.basename(file_path)}")
+            doc = fitz.open(file_path)
+            for page_num in range(len(doc)):
+                page = doc.load_page(page_num)
+                text = page.get_text()
+                if text.strip():  # skip empty pages
+                    page_doc = Document(
+                        page_content=text,
+                        metadata={
+                            "source": file_path,
+                            "page": page_num + 1
+                        }
+                    )
+                    documents.append(page_doc)
+            doc.close()
+            num_pages = len([d for d in documents if "source" in d.metadata and os.path.basename(d.metadata["source"]) == os.path.basename(file_path)])
+            print(f"  Successfully loaded {num_pages} pages from {os.path.basename(file_path)}")
         except Exception as e:
             print(f"  FAILED to load {os.path.basename(file_path)}: {str(e)}")
     
-    print(f"Total loaded {len(documents)} pages from {len(pdf_files)} PDFs")
+    print(f"Total loaded {len(documents)} documents from {len(pdf_files)} PDFs")
     return documents
 
 def split_documents(documents):
