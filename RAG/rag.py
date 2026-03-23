@@ -1,4 +1,5 @@
 import os
+from dotenv import load_dotenv
 import fitz
 from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -9,16 +10,21 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnablePassthrough
 
 if __name__ == "__main__":
-    # Check/set API key
+    load_dotenv()
+    # Check/set API key from .env
     groq_api_key = os.getenv("GROQ_API_KEY")
     if not groq_api_key:
-        print("ERROR: Set GROQ_API_KEY env var first!")
-        print("Windows: $env:GROQ_API_KEY='your_key' then rerun")
-        print("Or export GROQ_API_KEY=your_key (Linux/Mac)")
+        print("ERROR: GROQ_API_KEY not found! Add it to .env file in project root.")
+        print("Example: GROQ_API_KEY=your_groq_key_here")
         exit(1)
 
-def load_documents(docs_path="documents/"):
+def load_documents(docs_path="documents/", persist_dir="chroma_db/"):
+    """
+    Load all PDFs from docs_path (all 3 documents), split into chunks, create and persist Chroma vector store.
+    Returns: Chroma vector store object.
+    """
     docs_path = os.path.abspath(docs_path)
+    persist_dir = os.path.abspath(persist_dir)
     documents = []
     pdf_files = []
     for root, dirs, files in os.walk(docs_path):
@@ -51,7 +57,14 @@ def load_documents(docs_path="documents/"):
             print(f"  FAILED to load {os.path.basename(file_path)}: {str(e)}")
     
     print(f"Total loaded {len(documents)} documents from {len(pdf_files)} PDFs")
-    return documents
+    
+    # Split into chunks
+    chunks = split_documents(documents)
+    
+    # Create and persist vector store
+    vector_store = create_vector_store(chunks, persist_dir)
+    print(f"Vector store created and persisted at {persist_dir} with {vector_store._collection.count()} chunks from all documents")
+    return vector_store
 
 def split_documents(documents):
     splitter = RecursiveCharacterTextSplitter(
@@ -59,7 +72,10 @@ def split_documents(documents):
         chunk_overlap=200,    # overlap keeps context between chunks
     )
     chunks = splitter.split_documents(documents)
-    print(f"Split into {len(chunks)} chunks")
+    chunks = [c for c in chunks if c.page_content and len(c.page_content.strip()) > 10]
+    print(f"Split into {len(chunks)} non-empty chunks")
+    if not chunks:
+        print("WARNING: No valid chunks. PDFs may be scanned images without text.")
     return chunks
 
 def create_vector_store(chunks, persist_dir="chroma_db/"):
@@ -151,3 +167,4 @@ def query(rag_chain, vector_store, question):
         print(f"A: {result['answer']}")
         if result['sources']:
             print(f"Sources: {result['sources']}")
+
