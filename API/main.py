@@ -1,10 +1,14 @@
+import sys
+import os
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 import pandas as pd
 import numpy as np
-from .key.auth import verify_api_key, get_password_hash, API_KEYS_DB
-from API.key.keygen import generate_api_key
+from key.auth import verify_api_key, get_password_hash, API_KEYS_DB
+from key.keygen import generate_api_key
 import secrets
 from sklearn.ensemble import IsolationForest
 from sklearn.neighbors import LocalOutlierFactor
@@ -112,8 +116,7 @@ async def detect_anomalies():
         df, X, numeric_cols = preprocess_data(data_path)
         
         # Train models
-        results = Parallel(n_jobs=-1)(delayed(train_isolation_forest)(X) for _ in [1])
-        anomaly_iso, iso_forest = results[0]
+        anomaly_iso, iso_forest = train_isolation_forest(X)
         
         anomaly_lof = train_local_outlier_factor(X)
         
@@ -155,5 +158,4 @@ async def detect_anomalies():
 @app.get("/")
 async def root():
     return {"message": "Energy Anomaly Detection API", "endpoints": ["/detect-anomalies (POST)"]}
-
 
