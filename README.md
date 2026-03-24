@@ -95,12 +95,12 @@ git clone https://github.com/Ak47xdd/building-energy-anomaly-detection
 cd building-energy-anomaly-detection
 
 # ML env
-python -m venv api_env
+python -m venv rag_local_env
 # Activate...
 pip install -r requirements.txt
 
 # RAG env (recommended)
-python -m venv rag_env
+python -m venv rag_local_env
 # Activate...
 pip install -r rag_requirements.txt
 ```
@@ -140,15 +140,16 @@ Interactive chat over PDFs. Type questions like:
 
 - "What are the main energy saving recommendations?"
 - Sources cited automatically.
+
 ```
 {
-  "answer": "The audit recommends upgrading HVAC systems in Building A 
-             and installing smart meters across all floors to reduce 
+  "answer": "The audit recommends upgrading HVAC systems in Building A
+             and installing smart meters across all floors to reduce
              consumption by an estimated 18%.",
   "sources": ["documents/building_audit_2024.pdf"]
 }
 ```
-  
+
 **First run**: Builds `chroma_db/` (~1-2 min).
 
 ### FastAPI RAG API
