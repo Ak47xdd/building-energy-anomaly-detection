@@ -7,6 +7,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 import pandas as pd
 import numpy as np
+import uvicorn
 from key.auth import verify_api_key, get_password_hash, API_KEYS_DB
 from key.keygen import generate_api_key
 import secrets
@@ -108,7 +109,7 @@ def train_elliptic_envelope(X):
 
 @app.post("/detect-anomalies", response_model=AnomalySummary)
 async def detect_anomalies():
-    data_path = "data/meters/whole/eda.csv"
+    data_path = "../data/meters/whole/eda.csv"
     if not os.path.exists(data_path):
         return JSONResponse(status_code=404, content={"error": f"Data file not found: {data_path}"})
     
@@ -159,3 +160,5 @@ async def detect_anomalies():
 async def root():
     return {"message": "Energy Anomaly Detection API", "endpoints": ["/detect-anomalies (POST)"]}
 
+if __name__ == "__main__":
+    uvicorn.run("main:app", host="127.0.0.1", port=8080, reload=True)
