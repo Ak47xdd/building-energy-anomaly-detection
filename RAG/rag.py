@@ -3,8 +3,8 @@ from dotenv import load_dotenv
 import fitz
 from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_community.embeddings import HuggingFaceEmbeddings
-from langchain_community.vectorstores import Chroma
+from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_chroma import Chroma
 from langchain_groq import ChatGroq
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnablePassthrough
@@ -80,7 +80,8 @@ def split_documents(documents):
 
 def create_vector_store(chunks, persist_dir="chroma_db/"):
     embeddings = HuggingFaceEmbeddings(
-        model_name="all-MiniLM-L6-v2"  # free, runs locally
+        model_name="all-MiniLM-L6-v2",
+        model_kwargs={"token": os.getenv("HF_TOKEN")}
     )
     vector_store = Chroma.from_documents(
         documents=chunks,
@@ -92,7 +93,8 @@ def create_vector_store(chunks, persist_dir="chroma_db/"):
 
 def load_vector_store(persist_dir="chroma_db/"):
     embeddings = HuggingFaceEmbeddings(
-        model_name="all-MiniLM-L6-v2"
+        model_name="all-MiniLM-L6-v2",
+        model_kwargs={"token": os.getenv("HF_TOKEN")}
     )
     vector_store = Chroma(
         persist_directory=persist_dir,
@@ -103,7 +105,7 @@ def load_vector_store(persist_dir="chroma_db/"):
 def build_rag_chain(vector_store, groq_api_key):
     llm = ChatGroq(
         api_key=groq_api_key,
-        model_name="llama3-8b-8192",  # free Llama 3 model via Groq
+model_name="llama3-groq-8b-8192-tool-use",
         temperature=0.2
     )
 
